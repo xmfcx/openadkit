@@ -1,7 +1,7 @@
 # Zenoh Bridge
 
 Bridges Autoware data from edge to cloud for remote visualization and control.
-See the [deployment documentation](https://autowarefoundation.github.io/openadkit/deployments/demos/zenoh-bridge/)
+See the [canonical documentation](https://autowarefoundation.github.io/openadkit/deployment/zenoh-bridge/)
 for topology, configuration, and teleoperation.
 
 ## Setup
@@ -9,6 +9,12 @@ for topology, configuration, and teleoperation.
 ```bash
 cp .env.example .env
 ../../install.sh sample-data zenoh-bridge
+```
+
+From a release bundle, replace the install command with:
+
+```bash
+./install.sh sample-data zenoh-bridge
 ```
 
 Set `REMOTE_PASSWORD` in `.env` before starting.

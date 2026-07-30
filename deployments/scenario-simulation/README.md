@@ -1,7 +1,7 @@
 # Scenario Simulation
 
 Runs TIER IV Scenario Simulator workflows. See the
-[deployment documentation](https://autowarefoundation.github.io/openadkit/deployments/samples/scenario-simulation/)
+[canonical documentation](https://autowarefoundation.github.io/openadkit/deployment/scenario-simulation/)
 for configuration and troubleshooting.
 
 ## Source Checkout
@@ -9,4 +9,11 @@ for configuration and troubleshooting.
 ```bash
 ../../install.sh sample-data scenario-simulation
 docker compose --env-file ../base/base.env --env-file scenario-simulation.env up -d
+```
+
+## Release Bundle
+
+```bash
+./install.sh sample-data scenario-simulation
+docker compose --env-file scenario-simulation.env up -d
 ```

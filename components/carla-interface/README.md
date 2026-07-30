@@ -3,7 +3,7 @@
 This image packages Autoware's CARLA interface with the CARLA 0.9.16 Python API for the CARLA e2e sample.
 
 The image has no default launch command. From the Open AD Kit repository root,
-run it through the [CARLA Simulation deployment](https://autowarefoundation.github.io/openadkit/deployments/samples/carla-simulation/) launcher, which prepares the map and supplies the complete Compose configuration:
+run it through the [CARLA Simulation deployment](https://autowarefoundation.github.io/openadkit/deployment/carla-simulation/) launcher, which prepares the map and supplies the complete Compose configuration:
 
 ```bash
 cd deployments/carla-simulation

@@ -1,7 +1,7 @@
 # CARLA Simulation
 
 Runs closed-loop CARLA 0.9.16 simulation with modular Open AD Kit containers.
-See the [deployment documentation](https://autowarefoundation.github.io/openadkit/deployments/samples/carla-simulation/)
+See the [canonical documentation](https://autowarefoundation.github.io/openadkit/deployment/carla-simulation/)
 for configuration, launcher options, and troubleshooting.
 
 ## Requirements
@@ -26,7 +26,7 @@ sudo sysctl -w net.core.rmem_max=2147483647 net.core.wmem_max=2147483647 \
 ```
 
 Use `--drive` to engage and verify movement. A source checkout also supports
-`--build`.
+`--build`; release bundles use the published image.
 
 ## Stop
 
@@ -34,4 +34,6 @@ Use `--drive` to engage and verify movement. A source checkout also supports
 # Source checkout
 docker compose --env-file ../base/base.env --env-file carla-simulation.env down
 
+# Release bundle
+docker compose --env-file carla-simulation.env down
 ```

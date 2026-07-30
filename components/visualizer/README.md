@@ -2,7 +2,7 @@
 
 The visualizer provides browser-accessible RViz2 through noVNC. Configuration
 and networking details are maintained in the
-[component documentation](https://autowarefoundation.github.io/openadkit/components/).
+[Visualizer documentation](https://autowarefoundation.github.io/openadkit/components/visualizer/).
 
 ```bash
 docker run --rm --name visualizer --network host \
