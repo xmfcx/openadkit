@@ -6,7 +6,6 @@ REPO_ROOT=$(cd -- "$SCRIPT_DIR/../.." && pwd)
 ENV_FILE="$SCRIPT_DIR/config.env"
 COMPOSE_FILE="$SCRIPT_DIR/docker-compose.yaml"
 SOURCE_BASE_DIR="$SCRIPT_DIR/../base"
-BUNDLE_BASE_DIR="$SCRIPT_DIR/base"
 COMPOSE_CMD=()
 PYTHON_HELPER=$SCRIPT_DIR/carla_e2e_helper.py
 DRY_RUN=false
@@ -14,9 +13,7 @@ BUILD_IMAGE=false
 SKIP_VERIFY=false
 START_VISUALIZER_OVERRIDE=
 AUTO_DRIVE_OVERRIDE=
-STARTED_SERVICES=()
 TEMP_FILES=()
-SUCCESS=false
 
 usage() {
   cat <<'EOF'
@@ -93,10 +90,6 @@ rollback() {
   local status=$?
   trap - EXIT INT TERM
   rm -f "${TEMP_FILES[@]}"
-  if [[ "$SUCCESS" == false && "$DRY_RUN" == false && "${#STARTED_SERVICES[@]}" -gt 0 ]]; then
-    printf 'Startup failed; removing services started by this invocation: %s\n' "${STARTED_SERVICES[*]}" >&2
-    "${COMPOSE_CMD[@]}" rm --stop --force "${STARTED_SERVICES[@]}" >/dev/null 2>&1 || true
-  fi
   exit "$status"
 }
 trap rollback EXIT
@@ -104,20 +97,11 @@ trap 'exit 143' TERM
 trap 'exit 130' INT
 
 select_layout() {
-  local -a env_args
-  if [[ -f "$BUNDLE_BASE_DIR/docker-compose.yaml" ]]; then
-    if [[ ! -f "$BUNDLE_BASE_DIR/cyclonedds.xml" || ! -f "$BUNDLE_BASE_DIR/runtime.env" ]]; then
-      printf 'Incomplete release bundle: missing cyclonedds.xml or runtime.env under %s\n' "$BUNDLE_BASE_DIR" >&2
-      return 1
-    fi
-    env_args=(--env-file "$ENV_FILE")
-  elif [[ -f "$SOURCE_BASE_DIR/docker-compose.yaml" && -f "$SOURCE_BASE_DIR/runtime.env" ]]; then
-    env_args=(--env-file "$ENV_FILE")
-  else
-    printf 'Cannot identify source or release-bundle layout under %s\n' "$SCRIPT_DIR" >&2
+  if [[ ! -f "$SOURCE_BASE_DIR/docker-compose.yaml" || ! -f "$SOURCE_BASE_DIR/runtime.env" ]]; then
+    printf 'Missing shared deployment base under %s\n' "$SOURCE_BASE_DIR" >&2
     return 1
   fi
-  COMPOSE_CMD=(docker compose "${env_args[@]}" -f "$COMPOSE_FILE")
+  COMPOSE_CMD=(docker compose --env-file "$ENV_FILE" -f "$COMPOSE_FILE")
 }
 
 load_env() {
@@ -330,13 +314,7 @@ build_image() {
 
 start_stack() {
   local display_num="${CARLA_DISPLAY##*:}"
-  local running_output service
-  # carla-map-loader is a one-shot: always force-recreate it when carla is
-  # fresh/recreated so Town01 preload cannot be skipped via a prior exited(0).
-  local -a services=(carla carla-map-loader map system carla-interface sensing perception localization planning vehicle control api)
-  local -a fresh_services=() existing_services=()
-  local -A running=()
-  local carla_recreated=false
+  local -a services=(carla map system carla-interface sensing perception localization planning vehicle control api)
   display_num="${display_num%%.*}"
   if [[ "$DRY_RUN" == false && "${CARLA_RENDER_ARGS:-}" != *RenderOffScreen* && ! -S "/tmp/.X11-unix/X${display_num}" ]]; then
     printf 'X display socket for %s was not found under /tmp/.X11-unix\n' "$CARLA_DISPLAY" >&2
@@ -346,50 +324,11 @@ start_stack() {
   if [[ "$AUTOWARE_E2E_START_VISUALIZER" == true ]]; then
     services+=(visualizer)
   fi
-  if [[ "$DRY_RUN" == false ]]; then
-    running_output=$("${COMPOSE_CMD[@]}" ps --services --filter status=running)
-    while IFS= read -r service; do
-      [[ -n "$service" ]] && running["$service"]=1
-    done <<< "$running_output"
-    for service in "${services[@]}"; do
-      # One-shot map-loader is never "running"; track/start it only with carla.
-      [[ "$service" == carla-map-loader ]] && continue
-      [[ -v "running[$service]" ]] || STARTED_SERVICES+=("$service")
-    done
-    for service in "${services[@]}"; do
-      if [[ "$service" == carla-map-loader ]]; then
-        continue
-      fi
-      if [[ -v "running[$service]" ]]; then
-        existing_services+=("$service")
-      else
-        fresh_services+=("$service")
-        [[ "$service" == carla ]] && carla_recreated=true
-      fi
-    done
-    # Force-recreate the one-shot when CARLA is (re)created, or when the
-    # previous map-loader did not exit 0 (timeout/RPC flake) so carla-interface
-    # is not left blocked on service_completed_successfully forever.
-    local map_loader_exit=""
-    map_loader_exit=$("${COMPOSE_CMD[@]}" ps -a --format '{{.Service}} {{.ExitCode}}' 2>/dev/null \
-      | awk '$1 == "carla-map-loader" { print $2; exit }' || true)
-    if [[ "$carla_recreated" == true || -z "$map_loader_exit" || "$map_loader_exit" != "0" ]]; then
-      fresh_services+=(carla-map-loader)
-      STARTED_SERVICES+=(carla-map-loader)
-    fi
-  else
-    fresh_services=("${services[@]}")
-  fi
 
-  # Recreate only the services this invocation introduces; leave already-running
-  # services in place (--no-recreate) so a failure rollback, which removes only
-  # STARTED_SERVICES, cannot destroy and fail to restore a pre-existing container.
-  if [[ "${#existing_services[@]}" -gt 0 ]]; then
-    run_compose up -d --no-recreate "${existing_services[@]}"
-  fi
-  if [[ "${#fresh_services[@]}" -gt 0 ]]; then
-    run_compose up -d --force-recreate "${fresh_services[@]}"
-  fi
+  # The map loader is a one-shot. Remove its old result so every launch verifies
+  # the configured world, then let Compose reconcile changed images/config.
+  run_compose rm --stop --force carla-map-loader
+  run_compose up -d "${services[@]}"
 
   # Fail fast if the pointcloud map is not visible inside the container. A
   # wrong or empty bind mount (for example MAP_PATH expanded with the wrong
@@ -474,7 +413,6 @@ main() {
   start_stack
   verify_runtime
   autonomous_drive
-  SUCCESS=true
 }
 
 main

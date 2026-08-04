@@ -5,6 +5,7 @@ set -euo pipefail
 
 VNC_PID=""
 WEBSOCKIFY_PID=""
+RVIZ_PID=""
 COMMAND_PID=""
 
 if [ "$(id -u)" -eq 0 ]; then
@@ -23,6 +24,7 @@ cleanup() {
     trap - EXIT INT TERM
     echo "Shutting down VNC and websockify..."
     terminate_child "$COMMAND_PID"
+    terminate_child "$RVIZ_PID"
     terminate_child "$WEBSOCKIFY_PID"
     terminate_child "$VNC_PID"
 }
@@ -87,8 +89,6 @@ fi
 exec $rviz_launcher rviz2 -d "$RVIZ_CONFIG" --ros-args -p use_sim_time:="$USE_SIM_TIME"
 EOF
     chmod +x "$HOME/.local/bin/start-rviz2.sh"
-    grep -qxF "$HOME/.local/bin/start-rviz2.sh" "$HOME/.config/openbox/autostart" \
-        || echo "$HOME/.local/bin/start-rviz2.sh" >>"$HOME/.config/openbox/autostart"
 
     # Configure VNC password
     if [ -z "${REMOTE_PASSWORD:-}" ]; then
@@ -115,6 +115,7 @@ EOF
 
     # Set the DISPLAY variable to match VNC server
     echo "Setting DISPLAY to :99"
+    export DISPLAY=:99
     grep -qxF "export DISPLAY=:99" ~/.bashrc || echo "export DISPLAY=:99" >>~/.bashrc
     # Generate a unique self-signed TLS certificate at runtime so each
     # container instance has its own key pair (instead of a shared build-time
@@ -176,18 +177,18 @@ else
     echo "Launching remote rviz2 display"
     configure_vnc
 
-    # Supervise the long-running children (VNC + websockify, plus the optional
-    # command). wait -n returns as soon as ANY of them exits, so a later failure
-    # of the browser endpoint or VNC display tears the container down and lets
-    # restart policy recover it, instead of PID 1 sleeping forever while a dead
-    # service leaves the container looking healthy.
+    "$HOME/.local/bin/start-rviz2.sh" &
+    RVIZ_PID=$!
+
+    # Any child exit tears the container down so the restart policy can recover.
     if [ $# -gt 0 ]; then
         "$@" &
         COMMAND_PID=$!
     fi
 
     supervised_status=0
-    wait -n "$VNC_PID" "$WEBSOCKIFY_PID" ${COMMAND_PID:+"$COMMAND_PID"} || supervised_status=$?
+    wait -n "$VNC_PID" "$WEBSOCKIFY_PID" "$RVIZ_PID" ${COMMAND_PID:+"$COMMAND_PID"} || supervised_status=$?
+    [ "$supervised_status" -ne 0 ] || supervised_status=1
     echo "A supervised process exited (status ${supervised_status}); shutting down the visualizer." >&2
     exit "$supervised_status"
 fi

@@ -1,5 +1,10 @@
 #!/bin/bash
 
+set -euo pipefail
+
+SCRIPT_DIR=$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" && pwd)
+cd "$SCRIPT_DIR"
+
 # Check if teleop service is running
 if ! docker compose ps --services --filter "status=running" | grep -q "teleop"; then
     echo -e "\033[0;31m[Error]\033[0m Teleop service is not running."

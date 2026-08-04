@@ -17,7 +17,12 @@ services:
     network_mode: host
     init: true
     volumes:
-      - ${MAP_PATH}:/autoware_map:ro
+      - type: bind
+        source: ${MAP_PATH}
+        target: /autoware_map
+        read_only: true
+        bind:
+          create_host_path: false
     entrypoint: ["bash", "-lc"]
     command:
       - |
@@ -45,7 +50,12 @@ services:
     env_file:
       - ./runtime.env
     volumes:
-      - ${MAP_PATH}:/autoware_map:ro
+      - type: bind
+        source: ${MAP_PATH}
+        target: /autoware_map
+        read_only: true
+        bind:
+          create_host_path: false
       - ./cyclonedds.xml:/etc/cyclonedds/cyclonedds.xml:ro
     depends_on:
       map-check:

@@ -1,13 +1,14 @@
 # Zenoh Bridge
 
-Bridges Autoware data from edge to cloud for remote visualization and
-teleoperation. Checkout assets live under `deployments/zenoh-bridge/`.
+Splits Autoware and visualization into edge/cloud networks connected through
+Zenoh inside one Compose project. Checkout assets live under
+`deployments/zenoh-bridge/`.
 
 ## Security
 
 - noVNC is loopback-bound; set `REMOTE_PASSWORD` in `.env` (required).
-- Zenoh TCP **7448 has no transport auth/TLS**. Default bind is `127.0.0.1`.
-  For multi-host, bind an exact VPN/private address only and restrict peers.
+- Zenoh TCP 7448 stays on the internal Compose network and is not published to
+  the host.
 - Control topics (engage, emergency, teleop cmd) are on the allow-list — treat
   7448 as a vehicle-control plane.
 
@@ -20,7 +21,7 @@ cp .env.example .env
 ../../install.sh sample-data zenoh-bridge
 ```
 
-## Single-host (split topology)
+## Run
 
 ```bash
 ./cloud.sh up -d
@@ -28,24 +29,6 @@ cp .env.example .env
 ```
 
 Visualizer: `https://localhost:6081/vnc.html`
-
-## Multi-host
-
-1. **Cloud** — set `ZENOH_ROUTER_BIND_IP` to a private/VPN address in `.env`, then:
-
-```bash
-./cloud.sh up -d
-```
-
-2. **Edge** — point at the cloud:
-
-```bash
-export CLOUD_IP=<cloud-private-ip>
-./edge.sh up -d
-```
-
-`CLOUD_IP` selects the Zenoh endpoint the edge bridge dials
-(`tcp/${CLOUD_IP}:7448`).
 
 ## Teleoperation
 
@@ -75,6 +58,5 @@ export CLOUD_IP=<cloud-private-ip>
 
 ## Notes
 
-- Prefer `./cloud.sh` / `./edge.sh` over raw `docker compose up` (flag allowlists,
-  bind guards).
+- Prefer `./cloud.sh` / `./edge.sh` over raw `docker compose up`.
 - Map files must exist under `MAP_PATH` before `edge.sh` starts.

@@ -6,11 +6,7 @@ set -euo pipefail
 SCRIPT_DIR=$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" && pwd)
 ENV_FILE="$SCRIPT_DIR/config.env"
 
-if [ -f "$SCRIPT_DIR/base/docker-compose.yaml" ]; then
-  BASE_DIR="$SCRIPT_DIR/base"
-else
-  BASE_DIR="$SCRIPT_DIR/../base"
-fi
+BASE_DIR="$SCRIPT_DIR/../base"
 ENV_ARGS=(--env-file "$ENV_FILE")
 
 usage() {

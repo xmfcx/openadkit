@@ -1,6 +1,9 @@
 #!/bin/bash
 set -euo pipefail
 
+SCRIPT_DIR=$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" && pwd)
+cd "$SCRIPT_DIR"
+
 # Function to show help message
 show_help() {
     echo "Usage: ./edge.sh [COMMAND] [OPTIONS]"
@@ -20,7 +23,7 @@ show_help() {
 }
 
 # Import common library
-source ./common.sh
+source "$SCRIPT_DIR/common.sh"
 
 # Define Edge services
 EDGE_SERVICES="autoware scenario_simulator edge_zenoh_bridge"

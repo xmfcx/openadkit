@@ -7,7 +7,7 @@ containers and `autoware_carla_interface`. Checkout assets live under
 ## Runtime
 
 - CARLA: `carlasim/carla:0.9.16` (default offscreen)
-- Interface: `ghcr.io/autowarefoundation/openadkit:carla-interface`
+- Interface: `ghcr.io/autowarefoundation/openadkit:carla-interface-amd64-humble`
 - Map: `Town01` → `$HOME/autoware_data/maps/Town01`
 
 ## Prerequisites

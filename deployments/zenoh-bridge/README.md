@@ -14,6 +14,4 @@ cp .env.example .env   # set REMOTE_PASSWORD=
 
 Visualizer: `https://localhost:6081/vnc.html`
 
-**Warning:** TCP 7448 has no transport auth/TLS. Keep
-`ZENOH_ROUTER_BIND_IP=127.0.0.1` for single-host; multi-host needs a private/VPN
-bind and `CLOUD_IP` on the edge (see docs).
+Zenoh transport stays inside the Compose project and is not published to the host.
