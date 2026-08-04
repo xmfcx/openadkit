@@ -1,10 +1,13 @@
 # Open AD Kit deployment base.
 #
 # The services shared by every deployment (planning/scenario/logging).
-# Deployments pull this in with `include:` and add only their delta. Image refs use
+# Deployment Compose files include this and add only service-level differences. Image refs use
 # `${COMPONENT_IMAGE:-<default>}` so the registry+tag lives here once; override a
 # COMPONENT_IMAGE var (e.g. for CUDA images) to swap an image without editing this
 # file. Do not run this file directly — run a deployment, which includes it.
+#
+# Container ROS/DDS env: ./runtime.env via env_file. Each deployment supplies
+# one complete config.env for Compose interpolation.
 services:
   # Fail fast when MAP_PATH is empty or missing required files (replaces the
   # former map-init oneshot). Depends on host sample-data already published.
@@ -39,11 +42,8 @@ services:
     network_mode: host
     init: true
     ipc: host
-    environment:
-      - RMW_IMPLEMENTATION=rmw_cyclonedds_cpp
-      - ROS_DOMAIN_ID=${ROS_DOMAIN_ID}
-      - CYCLONEDDS_URI=file:///etc/cyclonedds/cyclonedds.xml
-      - CYCLONEDDS_NETWORK_INTERFACE=${CYCLONEDDS_NETWORK_INTERFACE:-lo}
+    env_file:
+      - ./runtime.env
     volumes:
       - ${MAP_PATH}:/autoware_map:ro
       - ./cyclonedds.xml:/etc/cyclonedds/cyclonedds.xml:ro
@@ -66,11 +66,8 @@ services:
     init: true
     ipc: host
     pid: service:map
-    environment:
-      - RMW_IMPLEMENTATION=rmw_cyclonedds_cpp
-      - ROS_DOMAIN_ID=${ROS_DOMAIN_ID}
-      - CYCLONEDDS_URI=file:///etc/cyclonedds/cyclonedds.xml
-      - CYCLONEDDS_NETWORK_INTERFACE=${CYCLONEDDS_NETWORK_INTERFACE:-lo}
+    env_file:
+      - ./runtime.env
     volumes:
       - ./cyclonedds.xml:/etc/cyclonedds/cyclonedds.xml:ro
     depends_on:
@@ -93,11 +90,8 @@ services:
     init: true
     ipc: host
     pid: service:map
-    environment:
-      - RMW_IMPLEMENTATION=rmw_cyclonedds_cpp
-      - ROS_DOMAIN_ID=${ROS_DOMAIN_ID}
-      - CYCLONEDDS_URI=file:///etc/cyclonedds/cyclonedds.xml
-      - CYCLONEDDS_NETWORK_INTERFACE=${CYCLONEDDS_NETWORK_INTERFACE:-lo}
+    env_file:
+      - ./runtime.env
     volumes:
       - ./cyclonedds.xml:/etc/cyclonedds/cyclonedds.xml:ro
     depends_on:
@@ -119,11 +113,8 @@ services:
     init: true
     ipc: host
     pid: service:map
-    environment:
-      - RMW_IMPLEMENTATION=rmw_cyclonedds_cpp
-      - ROS_DOMAIN_ID=${ROS_DOMAIN_ID}
-      - CYCLONEDDS_URI=file:///etc/cyclonedds/cyclonedds.xml
-      - CYCLONEDDS_NETWORK_INTERFACE=${CYCLONEDDS_NETWORK_INTERFACE:-lo}
+    env_file:
+      - ./runtime.env
     volumes:
       - ./cyclonedds.xml:/etc/cyclonedds/cyclonedds.xml:ro
     depends_on:
@@ -146,11 +137,8 @@ services:
     init: true
     ipc: host
     pid: service:map
-    environment:
-      - RMW_IMPLEMENTATION=rmw_cyclonedds_cpp
-      - ROS_DOMAIN_ID=${ROS_DOMAIN_ID}
-      - CYCLONEDDS_URI=file:///etc/cyclonedds/cyclonedds.xml
-      - CYCLONEDDS_NETWORK_INTERFACE=${CYCLONEDDS_NETWORK_INTERFACE:-lo}
+    env_file:
+      - ./runtime.env
     volumes:
       - ./cyclonedds.xml:/etc/cyclonedds/cyclonedds.xml:ro
       - ./config/vehicle_cmd_gate.param.yaml:/opt/autoware/autoware_vehicle_cmd_gate/share/autoware_vehicle_cmd_gate/config/vehicle_cmd_gate.param.yaml:ro
@@ -178,11 +166,8 @@ services:
     init: true
     ipc: host
     pid: service:map
-    environment:
-      - RMW_IMPLEMENTATION=rmw_cyclonedds_cpp
-      - ROS_DOMAIN_ID=${ROS_DOMAIN_ID}
-      - CYCLONEDDS_URI=file:///etc/cyclonedds/cyclonedds.xml
-      - CYCLONEDDS_NETWORK_INTERFACE=${CYCLONEDDS_NETWORK_INTERFACE:-lo}
+    env_file:
+      - ./runtime.env
     volumes:
       - ./cyclonedds.xml:/etc/cyclonedds/cyclonedds.xml:ro
     depends_on:
@@ -220,11 +205,8 @@ services:
     init: true
     ipc: host
     pid: service:map
-    environment:
-      - RMW_IMPLEMENTATION=rmw_cyclonedds_cpp
-      - ROS_DOMAIN_ID=${ROS_DOMAIN_ID}
-      - CYCLONEDDS_URI=file:///etc/cyclonedds/cyclonedds.xml
-      - CYCLONEDDS_NETWORK_INTERFACE=${CYCLONEDDS_NETWORK_INTERFACE:-lo}
+    env_file:
+      - ./runtime.env
     volumes:
       - ./cyclonedds.xml:/etc/cyclonedds/cyclonedds.xml:ro
     depends_on:
@@ -251,11 +233,9 @@ services:
     # components/visualizer/etc/visualizer_entrypoint.sh). To expose noVNC
     # remotely, edit that script's `127.0.0.1:6080` source address and front
     # the port with an authenticated reverse proxy.
+    env_file:
+      - ./runtime.env
     environment:
-      - RMW_IMPLEMENTATION=rmw_cyclonedds_cpp
-      - ROS_DOMAIN_ID=${ROS_DOMAIN_ID}
-      - CYCLONEDDS_URI=file:///etc/cyclonedds/cyclonedds.xml
-      - CYCLONEDDS_NETWORK_INTERFACE=${CYCLONEDDS_NETWORK_INTERFACE:-lo}
       - RVIZ_CONFIG=${RVIZ_CONFIG}
       - USE_SIM_TIME=${USE_SIM_TIME}
       - REMOTE_DISPLAY=${REMOTE_DISPLAY}

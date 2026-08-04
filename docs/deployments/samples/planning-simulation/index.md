@@ -20,13 +20,12 @@ From a source checkout:
 ```bash
 cd deployments/planning-simulation
 docker compose \
-  --env-file ../base/base.env \
-  --env-file planning-simulation.env \
+  --env-file config.env \
   up -d
 ```
 
 Open the visualizer at `https://localhost:6080/vnc.html` (accept the
-self-signed certificate). Use the `REMOTE_PASSWORD` from `deployments/base/base.env`.
+self-signed certificate). Use `REMOTE_PASSWORD` from `config.env`.
 
 Then follow the [Autoware planning simulation instructions](https://autowarefoundation.github.io/autoware-documentation/main/demos/planning-sim/lane-driving/#2-set-an-initial-pose-for-the-ego-vehicle)
 to set an initial pose and engage.
@@ -42,14 +41,13 @@ Smoke-test compose without starting containers:
 ```bash
 cd deployments/planning-simulation
 docker compose \
-  --env-file ../base/base.env \
-  --env-file planning-simulation.env \
+  --env-file config.env \
   down
 ```
 
 ## Notes
 
-- Always pass **both** env files (`base.env` + deployment env).
+- `config.env` is the complete Compose configuration for this deployment.
 - `map-check` fails fast if `MAP_PATH` is missing `lanelet2_map.osm` /
   `pointcloud_map.pcd` — run `install.sh sample-data` first.
-- Single-stack per host (`network_mode: host`, default `ROS_DOMAIN_ID=1`).
+- Single-stack per host (`network_mode: host`; `ROS_DOMAIN_ID=1` in `base/runtime.env`).

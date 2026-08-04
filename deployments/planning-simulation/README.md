@@ -7,7 +7,7 @@ Runnable assets for the Autoware planning simulation.
 
 ```bash
 ../../install.sh sample-data planning-simulation
-docker compose --env-file ../base/base.env --env-file planning-simulation.env up -d
+docker compose --env-file config.env up -d
 ```
 
 Smoke-test without starting: `./check-planning-simulation.sh`

@@ -18,10 +18,10 @@ For **complete documentation**, operational steps, and troubleshooting, see the 
 
 ```text
 deployments/
-├── base/                     # shared services pulled in by other deployments
-├── planning-simulation/
-├── scenario-simulation/
-├── logging-simulation/
-├── carla-simulation/         # downloads its own assets via start-carla-e2e-demo.sh
+├── base/                     # shared Compose + container runtime.env
+├── planning-simulation/      # complete deployment config.env
+├── scenario-simulation/      # complete deployment config.env
+├── logging-simulation/       # complete deployment config.env
+├── carla-simulation/         # config.env + asset/start helper
 └── zenoh-bridge/
 ```

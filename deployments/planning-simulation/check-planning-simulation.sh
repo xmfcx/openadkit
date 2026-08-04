@@ -4,15 +4,14 @@
 set -euo pipefail
 
 SCRIPT_DIR=$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" && pwd)
-ENV_FILE="$SCRIPT_DIR/planning-simulation.env"
+ENV_FILE="$SCRIPT_DIR/config.env"
 
 if [ -f "$SCRIPT_DIR/base/docker-compose.yaml" ]; then
   BASE_DIR="$SCRIPT_DIR/base"
-  ENV_ARGS=(--env-file "$ENV_FILE")
 else
   BASE_DIR="$SCRIPT_DIR/../base"
-  ENV_ARGS=(--env-file "$BASE_DIR/base.env" --env-file "$ENV_FILE")
 fi
+ENV_ARGS=(--env-file "$ENV_FILE")
 
 usage() {
   cat <<'EOF'
@@ -56,11 +55,9 @@ required_files=(
   "$ENV_FILE"
   "$BASE_DIR/docker-compose.yaml"
   "$BASE_DIR/cyclonedds.xml"
+  "$BASE_DIR/runtime.env"
   "$BASE_DIR/config/vehicle_cmd_gate.param.yaml"
 )
-if [ "$BASE_DIR" = "$SCRIPT_DIR/../base" ]; then
-  required_files+=("$BASE_DIR/base.env")
-fi
 for f in "${required_files[@]}"; do
   if [ -f "$f" ]; then
     echo "  ok: $f"

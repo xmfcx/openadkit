@@ -1,6 +1,6 @@
 # CARLA simulation — extends the deployment base with CARLA-specific services
-# and overrides. Run with both env files:
-#   docker compose --env-file ../base/base.env --env-file carla-simulation.env up -d
+# and overrides:
+#   docker compose --env-file config.env up -d
 include:
   - ../base/docker-compose.yaml
 
@@ -42,11 +42,9 @@ services:
   visualizer:
     container_name: autoware-e2e-visualizer
     runtime: nvidia
+    env_file:
+      - ../base/runtime.env
     environment:
-      - RMW_IMPLEMENTATION=rmw_cyclonedds_cpp
-      - ROS_DOMAIN_ID=${ROS_DOMAIN_ID}
-      - CYCLONEDDS_URI=file:///etc/cyclonedds/cyclonedds.xml
-      - CYCLONEDDS_NETWORK_INTERFACE=${CYCLONEDDS_NETWORK_INTERFACE:-lo}
       - RVIZ_CONFIG=${RVIZ_CONFIG}
       - USE_SIM_TIME=${USE_SIM_TIME}
       - REMOTE_DISPLAY=true
@@ -106,11 +104,8 @@ services:
     network_mode: host
     init: true
     ipc: host
-    environment:
-      - RMW_IMPLEMENTATION=rmw_cyclonedds_cpp
-      - ROS_DOMAIN_ID=${ROS_DOMAIN_ID}
-      - CYCLONEDDS_URI=file:///etc/cyclonedds/cyclonedds.xml
-      - CYCLONEDDS_NETWORK_INTERFACE=${CYCLONEDDS_NETWORK_INTERFACE:-lo}
+    env_file:
+      - ../base/runtime.env
     volumes:
       - ../base/cyclonedds.xml:/etc/cyclonedds/cyclonedds.xml:ro
       - ./sensor_mapping.yaml:/autoware_config/sensor_mapping.yaml:ro
@@ -156,11 +151,9 @@ services:
     ipc: host
     pid: service:map
     runtime: nvidia
+    env_file:
+      - ../base/runtime.env
     environment:
-      - RMW_IMPLEMENTATION=rmw_cyclonedds_cpp
-      - ROS_DOMAIN_ID=${ROS_DOMAIN_ID}
-      - CYCLONEDDS_URI=file:///etc/cyclonedds/cyclonedds.xml
-      - CYCLONEDDS_NETWORK_INTERFACE=${CYCLONEDDS_NETWORK_INTERFACE:-lo}
       - NVIDIA_VISIBLE_DEVICES=all
       - NVIDIA_DRIVER_CAPABILITIES=compute,utility
     volumes:
@@ -187,11 +180,9 @@ services:
     ipc: host
     pid: service:map
     runtime: nvidia
+    env_file:
+      - ../base/runtime.env
     environment:
-      - RMW_IMPLEMENTATION=rmw_cyclonedds_cpp
-      - ROS_DOMAIN_ID=${ROS_DOMAIN_ID}
-      - CYCLONEDDS_URI=file:///etc/cyclonedds/cyclonedds.xml
-      - CYCLONEDDS_NETWORK_INTERFACE=${CYCLONEDDS_NETWORK_INTERFACE:-lo}
       - NVIDIA_VISIBLE_DEVICES=all
       - NVIDIA_DRIVER_CAPABILITIES=compute,utility
     volumes:
@@ -222,11 +213,8 @@ services:
     init: true
     ipc: host
     pid: service:map
-    environment:
-      - RMW_IMPLEMENTATION=rmw_cyclonedds_cpp
-      - ROS_DOMAIN_ID=${ROS_DOMAIN_ID}
-      - CYCLONEDDS_URI=file:///etc/cyclonedds/cyclonedds.xml
-      - CYCLONEDDS_NETWORK_INTERFACE=${CYCLONEDDS_NETWORK_INTERFACE:-lo}
+    env_file:
+      - ../base/runtime.env
     volumes:
       - ../base/cyclonedds.xml:/etc/cyclonedds/cyclonedds.xml:ro
     depends_on:

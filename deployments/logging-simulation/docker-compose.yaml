@@ -12,11 +12,8 @@ services:
     init: true
     ipc: host
     pid: service:map
-    environment:
-      - RMW_IMPLEMENTATION=rmw_cyclonedds_cpp
-      - ROS_DOMAIN_ID=${ROS_DOMAIN_ID}
-      - CYCLONEDDS_URI=file:///etc/cyclonedds/cyclonedds.xml
-      - CYCLONEDDS_NETWORK_INTERFACE=${CYCLONEDDS_NETWORK_INTERFACE:-lo}
+    env_file:
+      - ../base/runtime.env
     volumes:
       - ${DATA_PATH}:/autoware_data:rw
       - ../base/cyclonedds.xml:/etc/cyclonedds/cyclonedds.xml:ro
@@ -40,11 +37,8 @@ services:
     init: true
     ipc: host
     pid: service:map
-    environment:
-      - RMW_IMPLEMENTATION=rmw_cyclonedds_cpp
-      - ROS_DOMAIN_ID=${ROS_DOMAIN_ID}
-      - CYCLONEDDS_URI=file:///etc/cyclonedds/cyclonedds.xml
-      - CYCLONEDDS_NETWORK_INTERFACE=${CYCLONEDDS_NETWORK_INTERFACE:-lo}
+    env_file:
+      - ../base/runtime.env
     volumes:
       - ${DATA_PATH}:/autoware_data:rw
       - ../base/cyclonedds.xml:/etc/cyclonedds/cyclonedds.xml:ro
@@ -72,11 +66,8 @@ services:
     init: true
     ipc: host
     pid: service:map
-    environment:
-      - RMW_IMPLEMENTATION=rmw_cyclonedds_cpp
-      - ROS_DOMAIN_ID=${ROS_DOMAIN_ID}
-      - CYCLONEDDS_URI=file:///etc/cyclonedds/cyclonedds.xml
-      - CYCLONEDDS_NETWORK_INTERFACE=${CYCLONEDDS_NETWORK_INTERFACE:-lo}
+    env_file:
+      - ../base/runtime.env
     volumes:
       - ../base/cyclonedds.xml:/etc/cyclonedds/cyclonedds.xml:ro
     depends_on:
@@ -100,11 +91,9 @@ services:
     init: true
     ipc: host
     pid: service:map
+    env_file:
+      - ../base/runtime.env
     environment:
-      - RMW_IMPLEMENTATION=rmw_cyclonedds_cpp
-      - ROS_DOMAIN_ID=${ROS_DOMAIN_ID}
-      - CYCLONEDDS_URI=file:///etc/cyclonedds/cyclonedds.xml
-      - CYCLONEDDS_NETWORK_INTERFACE=${CYCLONEDDS_NETWORK_INTERFACE:-lo}
       # Passed as runtime environment data (not interpolated into the command
       # program) so shell metacharacters in a value cannot alter the script.
       - ROSBAG_FORMAT=${ROSBAG_FORMAT}

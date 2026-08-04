@@ -3,7 +3,7 @@ set -euo pipefail
 
 SCRIPT_DIR=$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" && pwd)
 REPO_ROOT=$(cd -- "$SCRIPT_DIR/../.." && pwd)
-ENV_FILE="$SCRIPT_DIR/carla-simulation.env"
+ENV_FILE="$SCRIPT_DIR/config.env"
 COMPOSE_FILE="$SCRIPT_DIR/docker-compose.yaml"
 SOURCE_BASE_DIR="$SCRIPT_DIR/../base"
 BUNDLE_BASE_DIR="$SCRIPT_DIR/base"
@@ -106,16 +106,13 @@ trap 'exit 130' INT
 select_layout() {
   local -a env_args
   if [[ -f "$BUNDLE_BASE_DIR/docker-compose.yaml" ]]; then
-    if [[ ! -f "$BUNDLE_BASE_DIR/cyclonedds.xml" ]]; then
-      printf 'Incomplete release bundle: missing %s\n' "$BUNDLE_BASE_DIR/cyclonedds.xml" >&2
+    if [[ ! -f "$BUNDLE_BASE_DIR/cyclonedds.xml" || ! -f "$BUNDLE_BASE_DIR/runtime.env" ]]; then
+      printf 'Incomplete release bundle: missing cyclonedds.xml or runtime.env under %s\n' "$BUNDLE_BASE_DIR" >&2
       return 1
     fi
     env_args=(--env-file "$ENV_FILE")
-  elif [[ -f "$SOURCE_BASE_DIR/docker-compose.yaml" && -f "$SOURCE_BASE_DIR/base.env" ]]; then
-    env_args=(
-      --env-file "$SOURCE_BASE_DIR/base.env"
-      --env-file "$ENV_FILE"
-    )
+  elif [[ -f "$SOURCE_BASE_DIR/docker-compose.yaml" && -f "$SOURCE_BASE_DIR/runtime.env" ]]; then
+    env_args=(--env-file "$ENV_FILE")
   else
     printf 'Cannot identify source or release-bundle layout under %s\n' "$SCRIPT_DIR" >&2
     return 1

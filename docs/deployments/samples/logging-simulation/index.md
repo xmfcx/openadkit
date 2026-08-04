@@ -23,8 +23,7 @@ sudo ./install.sh --download-artifacts
 ```bash
 cd deployments/logging-simulation
 docker compose \
-  --env-file ../base/base.env \
-  --env-file logging-simulation.env \
+  --env-file config.env \
   up -d
 ```
 
@@ -32,8 +31,7 @@ Play the rosbag (separate profile):
 
 ```bash
 docker compose \
-  --env-file ../base/base.env \
-  --env-file logging-simulation.env \
+  --env-file config.env \
   --profile rosbag \
   up -d rosbag
 ```
@@ -46,9 +44,7 @@ perception:
 ```bash
 cd deployments/logging-simulation
 docker compose \
-  --env-file ../base/base.env \
-  --env-file logging-simulation.env \
-  --env-file logging-simulation.gpu.env \
+  --env-file config.env \
   -f docker-compose.yaml \
   -f docker-compose.gpu.yaml \
   up -d
@@ -57,15 +53,14 @@ docker compose \
 ## Visualizer
 
 Open `https://localhost:6080/vnc.html` and use `REMOTE_PASSWORD` from
-`deployments/base/base.env`.
+`config.env`.
 
 ## Stop
 
 ```bash
 cd deployments/logging-simulation
 docker compose \
-  --env-file ../base/base.env \
-  --env-file logging-simulation.env \
+  --env-file config.env \
   --profile rosbag \
   down
 ```
@@ -74,4 +69,4 @@ docker compose \
 
 - The sample rosbag has no camera images (privacy); traffic-light recognition
   and full object detection accuracy are limited.
-- Always pass **both** base and deployment env files.
+- `config.env` is the complete Compose configuration for this deployment.

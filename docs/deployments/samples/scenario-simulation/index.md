@@ -17,18 +17,17 @@ Checkout assets live under `deployments/scenario-simulation/`.
 ```bash
 cd deployments/scenario-simulation
 docker compose \
-  --env-file ../base/base.env \
-  --env-file scenario-simulation.env \
+  --env-file config.env \
   up -d
 ```
 
-Open `https://localhost:6080/vnc.html` (`REMOTE_PASSWORD` in `base.env`).
+Open `https://localhost:6080/vnc.html` (`REMOTE_PASSWORD` in `config.env`).
 The scenario runner waits up to `SCENARIO_READY_TIMEOUT` for Autoware readiness
 before launching the one-shot scenario.
 
 ## Configuration
 
-Edit `scenario-simulation.env`:
+Edit `config.env`:
 
 | Variable | Description |
 | --- | --- |
@@ -47,8 +46,7 @@ and map filenames consistently.
 ```bash
 cd deployments/scenario-simulation
 docker compose \
-  --env-file ../base/base.env \
-  --env-file scenario-simulation.env \
+  --env-file config.env \
   down
 ```
 

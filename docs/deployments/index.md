@@ -5,12 +5,15 @@ A **deployment** is a running instance of Open AD Kit, a specific combination of
 Runnable Compose assets live under `deployments/<name>/` in the repository.
 Each directory has a short README that points here for the full guide.
 
-Shared base services and env defaults: `deployments/base/` (`base.env` +
-`docker-compose.yaml`). From a checkout, always pass both env files:
+Shared base: `deployments/base/` (`docker-compose.yaml` + `runtime.env` for
+container ROS/DDS). Each deployment has one complete `config.env`:
 
 ```bash
-docker compose --env-file ../base/base.env --env-file <name>.env up -d
+docker compose --env-file config.env up -d
 ```
+
+`runtime.env` is loaded by services via `env_file:`; `config.env` is loaded by
+Compose via `--env-file`.
 
 Fetch maps/rosbags with `./install.sh sample-data <name>` (see
 [Getting Started](../getting-started/index.md)).

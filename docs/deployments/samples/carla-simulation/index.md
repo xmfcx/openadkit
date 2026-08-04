@@ -45,7 +45,7 @@ Optional:
 
 ## Visualizer
 
-`https://localhost:6080/vnc.html` — password from `deployments/base/base.env`
+`https://localhost:6080/vnc.html` — password from `config.env`
 (`REMOTE_PASSWORD`). In RViz: set **2D Goal Pose**, wait for planning, click
 **Auto**.
 
@@ -54,7 +54,7 @@ Optional:
 ```bash
 cd deployments/carla-simulation
 ./start-carla-e2e-demo.sh --down
-# or: docker compose --env-file ../base/base.env --env-file carla-simulation.env down
+# or: docker compose --env-file config.env down
 ```
 
 ## Notes
