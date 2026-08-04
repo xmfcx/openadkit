@@ -523,6 +523,26 @@ jobs:
             }
           skip-extraction: ${{ steps.cache-restore.outputs.cache-hit }}
 
+      # carla-interface FROM simulator via bake context. Wait for this run's
+      # simulator image so we do not rebuild simulator or pull a floating tag.
+      - name: Wait for simulator image (carla-interface)
+        if: matrix.target == 'carla-interface'
+        env:
+          SIMULATOR_REF: ${{ env.IMAGE_PREFIX_COMPONENT }}:simulator-amd64-${{ matrix.ros-distro }}-${{ needs.prepare.outputs.build_tag }}
+        run: |
+          set -euo pipefail
+          echo "Waiting for ${SIMULATOR_REF}"
+          for _ in $(seq 1 90); do
+            if docker manifest inspect "${SIMULATOR_REF}" >/dev/null 2>&1; then
+              echo "Found ${SIMULATOR_REF}"
+              exit 0
+            fi
+            sleep 20
+          done
+          echo "Timed out waiting for ${SIMULATOR_REF}" >&2
+          exit 1
+        shell: bash
+
       - name: Build and push ${{ matrix.target }}
         uses: docker/bake-action@v5
         env:
@@ -539,7 +559,8 @@ jobs:
             *.args.ROS_DISTRO=${{ matrix.ros-distro }}
             *.contexts.universe-common-devel=docker-image://${{ env.IMAGE_PREFIX_COMMON }}:universe-common-devel-${{ matrix.platform == 'linux/amd64' && 'amd64' || 'arm64' }}-${{ matrix.ros-distro }}-${{ needs.prepare.outputs.build_tag }}
             *.contexts.universe-common=docker-image://${{ env.IMAGE_PREFIX_COMMON }}:universe-common-${{ matrix.platform == 'linux/amd64' && 'amd64' || 'arm64' }}-${{ matrix.ros-distro }}-${{ needs.prepare.outputs.build_tag }}
-            *.args.SIMULATOR_IMAGE=${{ env.IMAGE_PREFIX_COMPONENT }}:simulator-amd64-${{ matrix.ros-distro }}
+            *.contexts.simulator=docker-image://${{ env.IMAGE_PREFIX_COMPONENT }}:simulator-amd64-${{ matrix.ros-distro }}-${{ needs.prepare.outputs.build_tag }}
+            *.args.SIMULATOR_IMAGE=simulator
             *.labels."org.opencontainers.image.build-tag"=${{ needs.prepare.outputs.build_tag }}
             *.labels."org.opencontainers.image.run-id"=${{ github.run_id }}
             *.labels."org.opencontainers.image.openadkit-sha"=${{ github.sha }}

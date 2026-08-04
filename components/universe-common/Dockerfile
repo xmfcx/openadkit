@@ -115,6 +115,10 @@ RUN --mount=type=bind,source=autoware/src,target=/tmp/autoware/src \
     apt-get update && \
     security_packages="$(dpkg-query -W -f='${binary:Package}\n' | grep -E '^(libssl-dev|libssl3|libssl3t64|linux-libc-dev|openssl|rsync)(:.*)?$' | xargs || true)" && \
     if [ -n "${security_packages}" ]; then DEBIAN_FRONTEND=noninteractive apt-get install -y --only-upgrade --no-install-recommends ${security_packages}; fi && \
+    DEBIAN_FRONTEND=noninteractive apt-get install -y --no-install-recommends \
+      geographiclib-tools \
+      "ros-${ROS_DISTRO}-topic-tools" && \
+    geographiclib-get-geoids egm2008-1 && \
     . "/opt/ros/${ROS_DISTRO}/setup.sh" && \
     internal_packages="$(colcon list --base-paths /tmp/autoware/src --names-only | tr '\n' ' ')" && \
     rosdep install -y --from-paths /opt/autoware/*/share \

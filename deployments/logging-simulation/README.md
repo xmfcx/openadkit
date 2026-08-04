@@ -1,15 +1,20 @@
 # Logging Simulation
 
-Replays recorded sensor data through the Autoware sensing, perception, and
-planning stack. Install the host dependencies and perception artifacts in the
-[deployment documentation](https://autowarefoundation.github.io/openadkit/deployments/samples/logging-simulation/)
-before starting.
+Runnable assets for rosbag-based logging simulation (CPU or GPU overlay).
 
-## Source Checkout
+**Guide (source of truth):**
+[Logging Simulation docs](https://autowarefoundation.github.io/openadkit/deployments/samples/logging-simulation/)
 
 ```bash
+sudo ../../install.sh --download-artifacts
 ../../install.sh sample-data logging-simulation
 docker compose --env-file ../base/base.env --env-file logging-simulation.env up -d
+```
+
+GPU:
+
+```bash
 docker compose --env-file ../base/base.env --env-file logging-simulation.env \
-  --profile rosbag up -d rosbag
+  --env-file logging-simulation.gpu.env \
+  -f docker-compose.yaml -f docker-compose.gpu.yaml up -d
 ```

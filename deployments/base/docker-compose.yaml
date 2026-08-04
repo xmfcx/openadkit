@@ -6,6 +6,33 @@
 # COMPONENT_IMAGE var (e.g. for CUDA images) to swap an image without editing this
 # file. Do not run this file directly — run a deployment, which includes it.
 services:
+  # Fail fast when MAP_PATH is empty or missing required files (replaces the
+  # former map-init oneshot). Depends on host sample-data already published.
+  map-check:
+    image: ${LOCALIZATION_MAPPING_IMAGE:-ghcr.io/autowarefoundation/openadkit:localization-mapping}
+    container_name: autoware-map-check
+    network_mode: host
+    init: true
+    volumes:
+      - ${MAP_PATH}:/autoware_map:ro
+    entrypoint: ["bash", "-lc"]
+    command:
+      - |
+        set -euo pipefail
+        missing=0
+        for f in "${LANELET2_MAP_FILE}" "${POINTCLOUD_MAP_FILE}"; do
+          if [[ ! -s "/autoware_map/$${f}" ]]; then
+            echo "map-check: missing or empty /autoware_map/$${f} (MAP_PATH on host)" >&2
+            missing=1
+          fi
+        done
+        if [[ "$${missing}" -ne 0 ]]; then
+          echo "map-check: fetch sample data first, e.g. ../../install.sh sample-data <deployment>" >&2
+          exit 1
+        fi
+        echo "map-check: ok (${LANELET2_MAP_FILE}, ${POINTCLOUD_MAP_FILE})"
+    restart: "no"
+
   map:
     image: ${LOCALIZATION_MAPPING_IMAGE:-ghcr.io/autowarefoundation/openadkit:localization-mapping}
     container_name: autoware-map
@@ -20,6 +47,9 @@ services:
     volumes:
       - ${MAP_PATH}:/autoware_map:ro
       - ./cyclonedds.xml:/etc/cyclonedds/cyclonedds.xml:ro
+    depends_on:
+      map-check:
+        condition: service_completed_successfully
     command: >
       ros2 launch autoware_launch tier4_map_component.launch.xml
       lanelet2_map_file:=${LANELET2_MAP_FILE}
@@ -123,27 +153,22 @@ services:
       - CYCLONEDDS_NETWORK_INTERFACE=${CYCLONEDDS_NETWORK_INTERFACE:-lo}
     volumes:
       - ./cyclonedds.xml:/etc/cyclonedds/cyclonedds.xml:ro
+      - ./config/vehicle_cmd_gate.param.yaml:/opt/autoware/autoware_vehicle_cmd_gate/share/autoware_vehicle_cmd_gate/config/vehicle_cmd_gate.param.yaml:ro
+      - ./config/vehicle_cmd_gate.param.yaml:/opt/autoware/autoware_launch/share/autoware_launch/config/control/vehicle_cmd_gate/vehicle_cmd_gate.param.yaml:ro
     depends_on:
       - map
       - planning
       - system
-    command:
-      - bash
-      - -lc
-      - |
-        set -euo pipefail
-        sudo -n sed -i "s/use_emergency_handling: true/use_emergency_handling: false/g" \
-          /opt/autoware/autoware_vehicle_cmd_gate/share/autoware_vehicle_cmd_gate/config/vehicle_cmd_gate.param.yaml \
-          /opt/autoware/autoware_launch/share/autoware_launch/config/control/vehicle_cmd_gate/vehicle_cmd_gate.param.yaml
-        exec ros2 launch autoware_launch tier4_control_component.launch.xml \
-          check_external_emergency_heartbeat:=${CHECK_EXTERNAL_EMERGENCY_HEARTBEAT} \
-          component_wise_launch:=true \
-          lateral_controller_mode:=${LATERAL_CONTROLLER_MODE} \
-          longitudinal_controller_mode:=${LONGITUDINAL_CONTROLLER_MODE} \
-          module_preset:=${CONTROL_MODULE_PRESET} \
-          use_sim_time:=${USE_SIM_TIME} \
-          vehicle_id:=${VEHICLE_ID} \
-          vehicle_model:=${VEHICLE_MODEL}
+    command: >
+      ros2 launch autoware_launch tier4_control_component.launch.xml
+      check_external_emergency_heartbeat:=${CHECK_EXTERNAL_EMERGENCY_HEARTBEAT}
+      component_wise_launch:=true
+      lateral_controller_mode:=${LATERAL_CONTROLLER_MODE}
+      longitudinal_controller_mode:=${LONGITUDINAL_CONTROLLER_MODE}
+      module_preset:=${CONTROL_MODULE_PRESET}
+      use_sim_time:=${USE_SIM_TIME}
+      vehicle_id:=${VEHICLE_ID}
+      vehicle_model:=${VEHICLE_MODEL}
     restart: on-failure
 
   simulator:
@@ -186,7 +211,7 @@ services:
       use_pointcloud_container:=${USE_POINTCLOUD_CONTAINER}
       vehicle_info_param_file:=/opt/autoware/${VEHICLE_MODEL}_description/share/${VEHICLE_MODEL}_description/config/vehicle_info.param.yaml
       vehicle_model:=${VEHICLE_MODEL}
-    restart: unless-stopped
+    restart: on-failure
 
   api:
     image: ${API_IMAGE:-ghcr.io/autowarefoundation/openadkit:api}

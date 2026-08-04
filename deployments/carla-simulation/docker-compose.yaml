@@ -115,6 +115,8 @@ services:
       - ../base/cyclonedds.xml:/etc/cyclonedds/cyclonedds.xml:ro
       - ./sensor_mapping.yaml:/autoware_config/sensor_mapping.yaml:ro
     depends_on:
+      carla:
+        condition: service_healthy
       carla-map-loader:
         condition: service_completed_successfully
     command: >

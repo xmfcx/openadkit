@@ -1,35 +1,19 @@
 # Zenoh Bridge
 
-Bridges Autoware data from edge to cloud for remote visualization and control.
-See the [deployment documentation](https://autowarefoundation.github.io/openadkit/deployments/demos/zenoh-bridge/)
-for topology, configuration, and teleoperation.
+Edge/cloud bridge for remote visualization and teleoperation.
 
-## Setup
+**Guide (source of truth):**
+[Zenoh Bridge docs](https://autowarefoundation.github.io/openadkit/deployments/demos/zenoh-bridge/)
 
 ```bash
-cp .env.example .env
+cp .env.example .env   # set REMOTE_PASSWORD=
 ../../install.sh sample-data zenoh-bridge
-```
-
-Set `REMOTE_PASSWORD` in `.env` before starting.
-
-## Start
-
-```bash
 ./cloud.sh up -d
 ./edge.sh up -d
 ```
 
-Open `https://localhost:6081/vnc.html` and accept the self-signed certificate.
+Visualizer: `https://localhost:6081/vnc.html`
 
-**Warning:** TCP 7448 has no transport authentication or encryption. For
-separate machines, bind it to an exact VPN/private-interface address and
-restrict it to trusted peers. `REMOTE_PASSWORD` protects only the noVNC
-visualizer.
-
-## Stop
-
-```bash
-./edge.sh down
-./cloud.sh down
-```
+**Warning:** TCP 7448 has no transport auth/TLS. Keep
+`ZENOH_ROUTER_BIND_IP=127.0.0.1` for single-host; multi-host needs a private/VPN
+bind and `CLOUD_IP` on the edge (see docs).

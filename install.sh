@@ -72,7 +72,8 @@ Options:
   --help                  Display this help message
   -h                      Display this help message
   --no-nvidia             Skip installation of NVIDIA container toolkit
-  --download-artifacts    Download Autoware artifacts (does not skip Docker)
+  --download-artifacts    Also download Autoware artifacts after host setup
+                           (unlike old setup.sh, this does NOT skip Docker/NVIDIA)
   --build-deps            Install tools needed to build images from source
                            (jq, vcs2l, python3-yaml, unzip, pipx, git)
   --verify                Run post-install smoke tests (Docker + GPU if available)
@@ -85,7 +86,8 @@ Examples:
   # Install Docker only (no NVIDIA)
   sudo ./install.sh --no-nvidia
 
-  # Download artifacts + install Docker
+  # Host setup (Docker + NVIDIA) and download Autoware artifacts.
+  # Still runs install_docker (idempotent if Docker is already present).
   sudo ./install.sh --download-artifacts
 
   # Full developer environment: host setup, then sample data
@@ -163,7 +165,8 @@ install_nvidia_container_toolkit() {
     # Clean up every temp file this function may create on return via a single
     # RETURN trap declared once, so a later trap cannot clobber an earlier one.
     local tmp_key="" tmp_list="" docker_backup=""
-    trap 'rm -f "$tmp_key" "$tmp_list" "$docker_backup"' RETURN
+    # docker_backup is written via sudo cp and may be root-owned; clean with sudo.
+    trap 'rm -f "$tmp_key" "$tmp_list"; [ -n "$docker_backup" ] && sudo rm -f "$docker_backup" || true' RETURN
 
     if command -v nvidia-ctk &>/dev/null; then
         log_info "NVIDIA Container Toolkit is already installed ($(nvidia-ctk --version))."
@@ -234,7 +237,9 @@ install_nvidia_container_toolkit() {
         return 1
     fi
 
-    if ! python3 -c 'import json,sys; json.load(open(sys.argv[1]))' "$docker_config" 2>/dev/null; then
+    # daemon.json is often root-only (0600); validate via sudo so a permission
+    # error is not misreported as invalid JSON.
+    if ! sudo python3 -c 'import json,sys; json.load(open(sys.argv[1]))' "$docker_config" 2>/dev/null; then
         log_error "Generated Docker configuration is not valid JSON; not restarting the daemon."
         restore_docker
         return 1
@@ -518,7 +523,9 @@ preflight_sample_data_dependencies() {
     if [ "$needs_unzip" = true ] && ! command -v unzip >/dev/null 2>&1; then
         missing+=(unzip)
     fi
-    if [ "$needs_unzip" = true ] && ! command -v python3 >/dev/null 2>&1; then
+    # python3 is required for atomic publish (renameat2) on every sample-data path,
+    # not only ZIP validation.
+    if ! command -v python3 >/dev/null 2>&1; then
         missing+=(python3)
     fi
     if [ "${#missing[@]}" -gt 0 ]; then

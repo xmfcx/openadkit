@@ -37,7 +37,19 @@
     sudo ./install.sh --download-artifacts
     ```
 
-    > This step is required for deployments that mount `${HOME}/autoware_data`, including the Logging Simulation sample.
+    > This still runs host Docker setup (idempotent if Docker is already
+    > installed). It is **not** a data-only mode like the old `setup.sh
+    > --download-artifacts`. Required for deployments that mount
+    > `${HOME}/autoware_data`, including Logging Simulation.
+
+4. Download sample maps/rosbags for the deployment you want to run (no sudo):
+
+    ```bash
+    ./install.sh sample-data planning-simulation
+    # or: logging-simulation | scenario-simulation | zenoh-bridge | all
+    ```
+
+    > CARLA maps are fetched by `deployments/carla-simulation/start-carla-e2e-demo.sh`, not `sample-data`.
 
 ## Next Steps
 

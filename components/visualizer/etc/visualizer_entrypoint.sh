@@ -168,7 +168,9 @@ set -u
 # Execute passed command if provided, otherwise launch rviz2
 if [ "${REMOTE_DISPLAY:-true}" == "false" ]; then
     echo "Launching local rviz2 display"
-    [ $# -eq 0 ] && rviz2 -d "$RVIZ_CONFIG" --ros-args -p use_sim_time:="$USE_SIM_TIME"
+    if [ $# -eq 0 ]; then
+        exec rviz2 -d "$RVIZ_CONFIG" --ros-args -p use_sim_time:="$USE_SIM_TIME"
+    fi
     exec "$@"
 else
     echo "Launching remote rviz2 display"

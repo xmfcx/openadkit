@@ -2,17 +2,30 @@
 
 A **deployment** is a running instance of Open AD Kit, a specific combination of Autoware components configured to achieve a particular task, such as a simulation or a full autonomous driving stack.
 
+Runnable Compose assets live under `deployments/<name>/` in the repository.
+Each directory has a short README that points here for the full guide.
+
+Shared base services and env defaults: `deployments/base/` (`base.env` +
+`docker-compose.yaml`). From a checkout, always pass both env files:
+
+```bash
+docker compose --env-file ../base/base.env --env-file <name>.env up -d
+```
+
+Fetch maps/rosbags with `./install.sh sample-data <name>` (see
+[Getting Started](../getting-started/index.md)).
+
 ## Samples
 
-Sample deployment configurations to help you get started. Recommended for **learning and development**.
+Recommended for **learning and development**.
 
-- [CARLA Simulation](samples/carla-simulation/index.md) - Run Autoware planning/control with CARLA as the external simulator.
-- [Planning Simulation](samples/planning-simulation/index.md) - Run the Autoware planning simulation with a sample map.
-- [Scenario Simulation](samples/scenario-simulation/index.md) - Run the Autoware scenario simulation with the TIER IV Scenario Simulator.
-- [Logging Simulation](samples/logging-simulation/index.md) - Run the Autoware logging simulation with a sample rosbag.
+- [CARLA Simulation](samples/carla-simulation/index.md) — `deployments/carla-simulation/`
+- [Planning Simulation](samples/planning-simulation/index.md) — `deployments/planning-simulation/`
+- [Scenario Simulation](samples/scenario-simulation/index.md) — `deployments/scenario-simulation/`
+- [Logging Simulation](samples/logging-simulation/index.md) — `deployments/logging-simulation/`
 
 ## Demos
 
-Demo deployment configurations that are specific to certain **use case scenarios**.
+Use-case specific topologies.
 
-- [Zenoh-bridge](demos/zenoh-bridge/index.md) - Demonstrates a "Cloud-Edge" deployment model by seamlessly bridging two isolated ROS 2 environments, decoupling compute-intensive components from lightweight visualization tools.
+- [Zenoh Bridge](demos/zenoh-bridge/index.md) — `deployments/zenoh-bridge/` (edge/cloud remote viz + teleop)

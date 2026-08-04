@@ -79,6 +79,7 @@ RUN --mount=type=cache,id=apt-cache-${ROS_DISTRO},target=/var/cache/apt,sharing=
     apt-get install -y --no-install-recommends \
       curl \
       unzip \
+      openssl \
       openbox \
       tigervnc-standalone-server \
       tigervnc-common \

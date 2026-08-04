@@ -194,14 +194,16 @@ require_host_prerequisites() {
   fi
 
   if [[ ! -r /etc/os-release ]]; then
-    printf 'CARLA simulation requires Ubuntu 22.04; /etc/os-release is unavailable.\n' >&2
-    return 1
-  fi
-  # shellcheck disable=SC1091
-  source /etc/os-release
-  if [[ "${ID:-}" != ubuntu || "${VERSION_ID:-}" != 22.04 ]]; then
-    printf 'CARLA simulation requires Ubuntu 22.04 (detected %s %s).\n' "${ID:-unknown}" "${VERSION_ID:-unknown}" >&2
-    return 1
+    printf 'Warning: /etc/os-release is unavailable; cannot verify host OS.\n' >&2
+  else
+    # shellcheck disable=SC1091
+    source /etc/os-release
+    if [[ "${ID:-}" != ubuntu || "${VERSION_ID:-}" != 22.04 ]]; then
+      # CARLA runs in a container; host OS is not a hard dependency. Warn on
+      # non-22.04 so users know the tested configuration without blocking 24.04.
+      printf 'Warning: CARLA demo is tested on Ubuntu 22.04 (detected %s %s).\n' \
+        "${ID:-unknown}" "${VERSION_ID:-unknown}" >&2
+    fi
   fi
   if ! command -v nvidia-smi >/dev/null || ! nvidia-smi >/dev/null; then
     printf 'A working NVIDIA GPU and driver are required for CARLA simulation.\n' >&2
@@ -332,9 +334,12 @@ build_image() {
 start_stack() {
   local display_num="${CARLA_DISPLAY##*:}"
   local running_output service
-  local -a services=(carla map system carla-interface sensing perception localization planning vehicle control api)
+  # carla-map-loader is a one-shot: always force-recreate it when carla is
+  # fresh/recreated so Town01 preload cannot be skipped via a prior exited(0).
+  local -a services=(carla carla-map-loader map system carla-interface sensing perception localization planning vehicle control api)
   local -a fresh_services=() existing_services=()
   local -A running=()
+  local carla_recreated=false
   display_num="${display_num%%.*}"
   if [[ "$DRY_RUN" == false && "${CARLA_RENDER_ARGS:-}" != *RenderOffScreen* && ! -S "/tmp/.X11-unix/X${display_num}" ]]; then
     printf 'X display socket for %s was not found under /tmp/.X11-unix\n' "$CARLA_DISPLAY" >&2
@@ -349,16 +354,32 @@ start_stack() {
     while IFS= read -r service; do
       [[ -n "$service" ]] && running["$service"]=1
     done <<< "$running_output"
-    for service in "${services[@]}" carla-map-loader; do
+    for service in "${services[@]}"; do
+      # One-shot map-loader is never "running"; track/start it only with carla.
+      [[ "$service" == carla-map-loader ]] && continue
       [[ -v "running[$service]" ]] || STARTED_SERVICES+=("$service")
     done
     for service in "${services[@]}"; do
+      if [[ "$service" == carla-map-loader ]]; then
+        continue
+      fi
       if [[ -v "running[$service]" ]]; then
         existing_services+=("$service")
       else
         fresh_services+=("$service")
+        [[ "$service" == carla ]] && carla_recreated=true
       fi
     done
+    # Force-recreate the one-shot when CARLA is (re)created, or when the
+    # previous map-loader did not exit 0 (timeout/RPC flake) so carla-interface
+    # is not left blocked on service_completed_successfully forever.
+    local map_loader_exit=""
+    map_loader_exit=$("${COMPOSE_CMD[@]}" ps -a --format '{{.Service}} {{.ExitCode}}' 2>/dev/null \
+      | awk '$1 == "carla-map-loader" { print $2; exit }' || true)
+    if [[ "$carla_recreated" == true || -z "$map_loader_exit" || "$map_loader_exit" != "0" ]]; then
+      fresh_services+=(carla-map-loader)
+      STARTED_SERVICES+=(carla-map-loader)
+    fi
   else
     fresh_services=("${services[@]}")
   fi
