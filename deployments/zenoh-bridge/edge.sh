@@ -40,10 +40,7 @@ while [[ $# -gt 0 ]]; do
             ;;
         --no-sim)
             export SCENARIO_SIMULATION="false"
-            # Remove scenario_simulator from EDGE_SERVICES
-            EDGE_SERVICES="${EDGE_SERVICES/scenario_simulator/}"
-            # Clean up extra spaces if any
-            EDGE_SERVICES=$(echo "$EDGE_SERVICES" | xargs)
+            EDGE_SERVICES="${EDGE_SERVICES/scenario_simulator /}"
             shift
             ;;
         up|down|ps|logs|config|dry-run)

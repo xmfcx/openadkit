@@ -98,11 +98,8 @@ def set_route_and_engage():
             raise RuntimeError(f"Timed out waiting for {description}")
 
         def wait_for_service(client, timeout, name):
-            deadline = time.time() + timeout
-            while time.time() < deadline:
-                if client.wait_for_service(timeout_sec=1.0):
-                    return
-            raise RuntimeError(f"Timed out waiting for service {name}")
+            if not client.wait_for_service(timeout_sec=timeout):
+                raise RuntimeError(f"Timed out waiting for service {name}")
 
         def call_service(client, request, timeout, name):
             wait_for_service(client, timeout, name)

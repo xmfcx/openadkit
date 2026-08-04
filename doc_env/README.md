@@ -47,7 +47,7 @@ Run `make help` to see all options.
 
     This builds the `mkdocs-dev` image using the `doc_env/Dockerfile`, which includes:
     - Base image: `python:3.11-slim`
-    - Installed MkDocs plugins: `mkdocs-material`, `mkdocs-awesome-pages-plugin`, `mkdocs-exclude`, `mkdocs-macros-plugin`, `pymdown-extensions`, `python-markdown-math`, `mdx-truly-sane-lists`, `plantuml-markdown`
+    - MkDocs dependencies from `docs/requirements.txt`
     - Working directory: `/app`
     - Exposed port: `8000`
 
@@ -88,7 +88,7 @@ Run `make help` to see all options.
 ## Notes
 
 - **File Permissions**: The `make build` command uses `--user $(id -u):$(id -g)` to ensure the `site/` directory has the same ownership as your host user, avoiding permission issues on Linux systems.
-- **Customizing Plugins**: Update both `doc_env/Dockerfile` and `mkdocs.yaml` if additional MkDocs plugins are needed.
+- **Customizing Plugins**: Update `docs/requirements.txt` and `mkdocs.yaml` if additional MkDocs plugins are needed.
 - **Cleaning Up Docker**: Use `docker system prune` to remove unused images and containers.
 - **Documentation Source**: The published documentation lives under `docs/` and is configured by `mkdocs.yaml`.
 

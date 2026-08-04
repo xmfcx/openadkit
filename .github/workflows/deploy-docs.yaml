@@ -43,10 +43,12 @@ jobs:
       - name: Build with MkDocs
         run: mkdocs build --clean --verbose
 
-      - name: Upload build artifact
-        uses: actions/upload-artifact@v7
+      - name: Setup Pages
+        uses: actions/configure-pages@v5
+
+      - name: Upload Pages artifact
+        uses: actions/upload-pages-artifact@v3
         with:
-          name: docs-site
           path: ./site
 
   # Deploy to main GitHub Pages
@@ -58,20 +60,6 @@ jobs:
       name: github-pages
       url: ${{ steps.deployment.outputs.page_url }}
     steps:
-      - name: Download build artifact
-        uses: actions/download-artifact@v4
-        with:
-          name: docs-site
-          path: ./site
-
-      - name: Setup Pages
-        uses: actions/configure-pages@v5
-
-      - name: Upload pages artifact
-        uses: actions/upload-pages-artifact@v3
-        with:
-          path: ./site
-
       - name: Deploy to GitHub Pages
         id: deployment
         uses: actions/deploy-pages@v5

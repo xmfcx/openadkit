@@ -1,4 +1,10 @@
-x-scenario-simulator-image: &scenario-simulator-image ghcr.io/tier4/scenario_simulator_v2:humble-25.0.20-runtime
+x-zenoh-bridge: &zenoh-bridge
+  image: eclipse/zenoh-bridge-ros2dds:latest@sha256:5aca6798ae112e390a97788450fd37360ddd72ac092032a25acf9fac17b2d9af
+  volumes:
+    - ./config:/config:ro
+  # Long-running bridge process: restart if it dies so the tunnel recovers
+  # instead of leaving the container exited while the project looks healthy.
+  restart: unless-stopped
 
 # Three named networks match the architecture described in
 # docs/deployments/demos/zenoh-bridge/index.md:
@@ -43,7 +49,7 @@ services:
     # Scenario output (output_directory below) is written to the container
     # filesystem only and is disposable by design: record:=false, so no rosbag
     # is retained. Bind a host volume here if you need per-run artifacts kept.
-    image: *scenario-simulator-image
+    image: ghcr.io/tier4/scenario_simulator_v2:humble-25.0.20-runtime
     networks:
       - edge_net
     environment:
@@ -76,23 +82,14 @@ services:
         condition: service_completed_successfully
 
   edge_zenoh_bridge:
-    image: eclipse/zenoh-bridge-ros2dds:latest@sha256:5aca6798ae112e390a97788450fd37360ddd72ac092032a25acf9fac17b2d9af
+    <<: *zenoh-bridge
     # Bridges edge_net (ROS 2 DDS) and the internal zenoh_net.
     networks:
-      edge_net:
-        aliases:
-          - edge_zenoh_bridge
-      zenoh_net:
-        aliases:
-          - edge_zenoh_bridge
+      - edge_net
+      - zenoh_net
     environment:
       - ROS_DISTRO=humble
       - ROS_DOMAIN_ID=0
-    volumes:
-      - ./config:/config:ro
-    # Long-running bridge process: restart if it dies so the tunnel recovers
-    # instead of leaving the container exited while the project looks healthy.
-    restart: unless-stopped
     command: >
       -l tcp/0.0.0.0:7447
       -e tcp/cloud_zenoh_bridge:7448
@@ -142,24 +139,15 @@ services:
     restart: on-failure
 
   cloud_zenoh_bridge:
-    image: eclipse/zenoh-bridge-ros2dds:latest@sha256:5aca6798ae112e390a97788450fd37360ddd72ac092032a25acf9fac17b2d9af
+    <<: *zenoh-bridge
     # Bridges cloud_net and the internal zenoh_net. Port 7448 is intentionally
     # not published to the host.
     networks:
-      cloud_net:
-        aliases:
-          - cloud_zenoh_bridge
-      zenoh_net:
-        aliases:
-          - cloud_zenoh_bridge
+      - cloud_net
+      - zenoh_net
     environment:
       - ROS_DISTRO=humble
       - ROS_DOMAIN_ID=1
-    volumes:
-      - ./config:/config:ro
-    # Long-running bridge process: restart if it dies so the tunnel recovers
-    # instead of leaving the container exited while the project looks healthy.
-    restart: unless-stopped
     command: >
       -l tcp/0.0.0.0:7448
       -c /config/zenoh-bridge-ros2dds.json5

@@ -42,15 +42,14 @@ read_dotenv_value() {
 }
 
 validate_args() {
-    local args="$1"
-    local allowed_flags="-d --detach --build --no-build --no-deps --force-recreate --remove-orphans"
+    local arg
 
-    for arg in $args; do
-        case " $allowed_flags " in
-            *" $arg "*) ;;
+    for arg in "$@"; do
+        case "$arg" in
+            -d|--detach|--build|--no-build|--no-deps|--force-recreate|--remove-orphans) ;;
             *)
                 echo -e "${RED}[Error]${NC} Invalid or unsafe flag: $arg"
-                echo "Allowed flags: $allowed_flags"
+                echo "Allowed flags: -d --detach --build --no-build --no-deps --force-recreate --remove-orphans"
                 exit 1
                 ;;
         esac
@@ -64,26 +63,26 @@ run_compose() {
     shift
 
     local cmd="${1:-up}"
-    shift
-    local args="$*"
+    if [[ $# -gt 0 ]]; then
+        shift
+    fi
+    local -a args=("$@")
+    local -a services
+    read -r -a services <<< "$target_services"
 
     echo -e "${YELLOW}[${context_name}]${NC} Target Services: ${GREEN}${target_services}${NC}"
 
     case "$cmd" in
         "up")
             echo -e "${YELLOW}[${context_name}]${NC} Starting services..."
-            validate_args "$args"
-            # shellcheck disable=SC2086 # word-splitting is intentional: $args and
-            # $target_services each expand to multiple compose flags/services.
-            docker compose up $args $target_services
+            validate_args "${args[@]}"
+            docker compose up "${args[@]}" "${services[@]}"
             ;;
 
         "down")
             echo -e "${RED}[${context_name}]${NC} Stopping and removing services (with volumes)..."
-            # shellcheck disable=SC2086 # $target_services expands to multiple services.
-            docker compose stop $target_services
-            # shellcheck disable=SC2086
-            docker compose rm -f -v $target_services
+            docker compose stop "${services[@]}"
+            docker compose rm -f -v "${services[@]}"
             ;;
 
         "dry-run")
@@ -98,9 +97,8 @@ run_compose() {
             ;;
 
         *)
-            echo -e "${YELLOW}[${context_name}]${NC} Executing: docker compose $cmd $args ..."
-            # shellcheck disable=SC2086 # word-splitting is intentional.
-            docker compose "$cmd"${args:+ $args} $target_services
+            echo -e "${YELLOW}[${context_name}]${NC} Executing: docker compose $cmd ${args[*]} ..."
+            docker compose "$cmd" "${args[@]}" "${services[@]}"
             ;;
     esac
 }
